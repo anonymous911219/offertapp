@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import type { User } from "@supabase/supabase-js";
 
 export default function AppShell({ children }) {
-  const [user, setUser] = useState(null);
-  const [open, setOpen] = useState(false);
+const [user, setUser] = useState<User | null>(null);  const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const pathname = usePathname();
