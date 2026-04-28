@@ -1,20 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { Resend } from "resend";
 import jsPDF from "jspdf";
 
 export const runtime = "nodejs";
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
+export async function POST(req: NextRequest): Promise<Response> {
   console.log("🔥 SEND EMAIL API HIT");
 
   try {
     const apiKey = process.env.RESEND_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json(
-        { success: false, error: "Missing RESEND_API_KEY" },
-        { status: 500 }
-      );
+      throw new Error("Missing RESEND_API_KEY");
     }
 
     const resend = new Resend(apiKey);
@@ -22,13 +19,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const data = await req.json();
 
     if (!data?.email) {
-      return NextResponse.json(
+      return Response.json(
         { success: false, error: "Missing email" },
         { status: 400 }
       );
     }
 
-    // 📄 PDF
     const doc = new jsPDF();
 
     doc.setFontSize(18);
@@ -42,7 +38,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const pdfArrayBuffer = doc.output("arraybuffer");
 
-    // 📩 EMAIL
     const result = await resend.emails.send({
       from: "onboarding@resend.dev",
       to: data.email,
@@ -61,13 +56,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       ],
     });
 
-    return NextResponse.json({ success: true, result });
+    return Response.json({ success: true, result });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
 
-  } catch (error) {
-    console.error("❌ EMAIL ERROR:", error);
-
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
+    return Response.json(
+      { success: false, error: message },
       { status: 500 }
     );
   }
