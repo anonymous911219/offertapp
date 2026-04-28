@@ -4,43 +4,22 @@ import jsPDF from "jspdf";
 
 export const runtime = "nodejs";
 
-type OfferPayload = {
-  email?: string;
-  namn?: string;
-  offert_id?: string;
-  pris?: number;
-};
-
 export async function POST(req: NextRequest) {
-  console.log("📨 send-email triggered");
+  console.log("🔥 SEND EMAIL API HIT");
 
   try {
-    // 🔐 ENV CHECK (fail fast)
-    const apiKey = process.env.RESEND_API_KEY;
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
-    if (!apiKey) {
-      console.error("❌ Missing RESEND_API_KEY");
-      return Response.json(
-        { success: false, error: "Server misconfigured" },
-        { status: 500 }
-      );
+    // 🔐 env check
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error("Missing RESEND_API_KEY in environment variables");
     }
 
-    const resend = new Resend(apiKey);
+    // 📦 parse request safely
+    const data = await req.json();
 
-    // 📥 PARSE BODY SAFE
-    let data: OfferPayload;
+    console.log("DATA:", data);
 
-    try {
-      data = await req.json();
-    } catch {
-      return Response.json(
-        { success: false, error: "Invalid JSON body" },
-        { status: 400 }
-      );
-    }
-
-    // 🧠 VALIDATION
     if (!data?.email) {
       return Response.json(
         { success: false, error: "Missing email" },
@@ -48,58 +27,51 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const namn = data.namn ?? "kund";
-    const offertId = data.offert_id ?? "unknown";
-    const pris = data.pris ?? 0;
-
-    // 📄 PDF GENERATION (safe)
+    // 📄 PDF GENERATION
     const doc = new jsPDF();
 
     doc.setFontSize(18);
     doc.text("Fönsterputs Offert", 20, 20);
 
     doc.setFontSize(12);
-    doc.text(`Offertnummer: ${offertId}`, 20, 40);
-    doc.text(`Namn: ${namn}`, 20, 50);
-    doc.text(`Email: ${data.email}`, 20, 60);
-    doc.text(`Pris: ${pris} kr`, 20, 80);
+    doc.text(`Offertnummer: ${data.offert_id || "-"}`, 20, 40);
+    doc.text(`Namn: ${data.namn || "-"}`, 20, 50);
+    doc.text(`Email: ${data.email || "-"}`, 20, 60);
+    doc.text(`Pris: ${data.pris || 0} kr`, 20, 80);
 
-    const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
+    const pdfArrayBuffer = doc.output("arraybuffer");
 
     // 📩 SEND EMAIL
     const result = await resend.emails.send({
-      from: "Offertapp <onboarding@resend.dev>",
+      from: "onboarding@resend.dev",
       to: data.email,
-      subject: `Din offert ${offertId}`,
+      subject: `Din offert ${data.offert_id || ""}`,
       html: `
-        <h2>Fönsterputs Offert</h2>
-        <p>Hej ${namn},</p>
-        <p>Här är din offert.</p>
-        <p><b>Pris:</b> ${pris} kr</p>
+        <h1>Fönsterputs Offert</h1>
+        <p>Hej ${data.namn || "kund"},</p>
+        <p>Din offert är bifogad som PDF.</p>
+        <p><b>Pris:</b> ${data.pris || 0} kr</p>
       `,
       attachments: [
         {
-          filename: `offert-${offertId}.pdf`,
-          content: pdfBuffer,
+          filename: `offert-${data.offert_id || "unknown"}.pdf`,
+          content: Buffer.from(pdfArrayBuffer),
         },
       ],
     });
 
-    console.log("✅ Email sent:", result?.id);
+    console.log("RESEND RESULT:", result);
 
-    return Response.json({
-      success: true,
-      id: result?.id,
-    });
+    return Response.json({ success: true, result });
 
-  } catch (error: any) {
-    console.error("❌ send-email error:", error);
+  } catch (error: unknown) {
+    console.error("EMAIL ERROR:", error);
+
+    const message =
+      error instanceof Error ? error.message : "Unknown error";
 
     return Response.json(
-      {
-        success: false,
-        error: error?.message ?? "Unknown error",
-      },
+      { success: false, error: message },
       { status: 500 }
     );
   }
