@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
-export default function RootLayout({ children }) {
+export default function AppShell({ children }) {
   const [user, setUser] = useState(null);
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -26,8 +27,8 @@ export default function RootLayout({ children }) {
   };
 
   return (
-    <html lang="sv">
-      <body style={styles.body}>
+    <div style={styles.body}>
+      <div style={styles.wrapper}>
 
         {/* OVERLAY */}
         {menuOpen && (
@@ -78,7 +79,7 @@ export default function RootLayout({ children }) {
 
               {open && (
                 <div style={styles.dropdown}>
-                  <p style={styles.email}>
+                  <p style={{ margin: 0, fontSize: 12, opacity: 0.7 }}>
                     {user?.email}
                   </p>
 
@@ -94,8 +95,8 @@ export default function RootLayout({ children }) {
           <main style={styles.content}>{children}</main>
 
         </div>
-      </body>
-    </html>
+      </div>
+    </div>
   );
 }
 
@@ -104,7 +105,7 @@ function NavLink({ href, label, current, onClick }) {
   const active = current === href;
 
   return (
-    <a
+    <Link
       href={href}
       onClick={onClick}
       style={{
@@ -113,24 +114,23 @@ function NavLink({ href, label, current, onClick }) {
       }}
     >
       {label}
-    </a>
+    </Link>
   );
 }
 
-/* STYLES (FIXAT LAYOUT PROBLEM) */
+/* STYLES (EXAKT DIN DESIGN) */
 const styles = {
   body: {
     margin: 0,
-    padding: 0,
-    width: "100%",
-    minHeight: "100vh",
     fontFamily: "sans-serif",
     background: "#0b1220",
     color: "white",
-    overflowX: "hidden",
   },
 
-  /* SIDEBAR */
+  wrapper: {
+    display: "flex",
+  },
+
   sidebar: {
     width: 240,
     background: "#0f172a",
@@ -148,7 +148,6 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: 10,
-    marginTop: 40,
   },
 
   link: {
@@ -159,7 +158,6 @@ const styles = {
     display: "block",
   },
 
-  /* OVERLAY */
   overlay: {
     position: "fixed",
     inset: 0,
@@ -167,15 +165,13 @@ const styles = {
     zIndex: 999,
   },
 
-  /* MAIN (FIX: INGET marginLeft!) */
   mainArea: {
     flex: 1,
+    marginLeft: 240,
     display: "flex",
     flexDirection: "column",
-    width: "100%",
   },
 
-  /* TOPBAR */
   topBar: {
     display: "flex",
     alignItems: "center",
@@ -186,6 +182,10 @@ const styles = {
 
   spacer: { flex: 1 },
 
+  content: {
+    padding: 30,
+  },
+
   hamburger: {
     fontSize: 22,
     background: "transparent",
@@ -194,12 +194,6 @@ const styles = {
     cursor: "pointer",
   },
 
-  /* CONTENT */
-  content: {
-    padding: 30,
-  },
-
-  /* USER */
   dropdownWrapper: {
     position: "relative",
   },
@@ -213,7 +207,6 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
-    fontWeight: "bold",
   },
 
   dropdown: {
@@ -225,14 +218,6 @@ const styles = {
     borderRadius: 10,
     width: 200,
     zIndex: 2000,
-    border: "1px solid #1f2a44",
-  },
-
-  email: {
-    fontSize: 12,
-    opacity: 0.7,
-    margin: 0,
-    wordBreak: "break-word",
   },
 
   dropdownBtn: {

@@ -5,6 +5,10 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+
+    // 🔥 FIX (lägg till denna rad)
+    "noImplicitAny": false,
+
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
