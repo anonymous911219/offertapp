@@ -4,21 +4,21 @@ import jsPDF from "jspdf";
 
 export const runtime = "nodejs";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<Response> {
   console.log("🔥 SEND EMAIL API HIT");
 
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    const apiKey = process.env.RESEND_API_KEY;
 
-    // 🔐 env check
-    if (!process.env.RESEND_API_KEY) {
+    if (!apiKey) {
       throw new Error("Missing RESEND_API_KEY in environment variables");
     }
 
-    // 📦 parse request safely
+    const resend = new Resend(apiKey);
+
     const data = await req.json();
 
-    console.log("DATA:", data);
+    console.log("📩 DATA:", data);
 
     if (!data?.email) {
       return Response.json(
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 📄 PDF GENERATION
+    // 📄 PDF
     const doc = new jsPDF();
 
     doc.setFontSize(18);
@@ -41,7 +41,9 @@ export async function POST(req: NextRequest) {
 
     const pdfArrayBuffer = doc.output("arraybuffer");
 
-    // 📩 SEND EMAIL
+    console.log("📄 PDF SIZE:", pdfArrayBuffer.byteLength);
+
+    // 📩 EMAIL
     const result = await resend.emails.send({
       from: "onboarding@resend.dev",
       to: data.email,
@@ -60,12 +62,12 @@ export async function POST(req: NextRequest) {
       ],
     });
 
-    console.log("RESEND RESULT:", result);
+    console.log("📤 RESEND RESULT:", result);
 
     return Response.json({ success: true, result });
 
   } catch (error: unknown) {
-    console.error("EMAIL ERROR:", error);
+    console.error("❌ EMAIL ERROR:", error);
 
     const message =
       error instanceof Error ? error.message : "Unknown error";
