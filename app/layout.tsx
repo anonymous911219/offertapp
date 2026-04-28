@@ -3,9 +3,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { usePathname } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 
-export default function RootLayout({ children }) {
-  const [user, setUser] = useState(null);
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [user, setUser] = useState<User | null>(null);
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -14,7 +19,7 @@ export default function RootLayout({ children }) {
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
-      setUser(data?.user || null);
+      setUser(data?.user ?? null);
     };
 
     getUser();
@@ -73,13 +78,13 @@ export default function RootLayout({ children }) {
                 style={styles.avatar}
                 onClick={() => setOpen(!open)}
               >
-                {(user?.email?.charAt(0) || "A").toUpperCase()}
+                {(user?.email?.charAt(0) ?? "A").toUpperCase()}
               </div>
 
               {open && (
                 <div style={styles.dropdown}>
                   <p style={styles.email}>
-                    {user?.email}
+                    {user?.email ?? "Ej inloggad"}
                   </p>
 
                   <button style={styles.dropdownBtn} onClick={logout}>
@@ -100,7 +105,17 @@ export default function RootLayout({ children }) {
 }
 
 /* NAV LINK */
-function NavLink({ href, label, current, onClick }) {
+function NavLink({
+  href,
+  label,
+  current,
+  onClick,
+}: {
+  href: string;
+  label: string;
+  current: string;
+  onClick: () => void;
+}) {
   const active = current === href;
 
   return (
@@ -117,8 +132,8 @@ function NavLink({ href, label, current, onClick }) {
   );
 }
 
-/* STYLES (FIXAT LAYOUT PROBLEM) */
-const styles = {
+/* STYLES */
+const styles: Record<string, any> = {
   body: {
     margin: 0,
     padding: 0,
@@ -130,7 +145,6 @@ const styles = {
     overflowX: "hidden",
   },
 
-  /* SIDEBAR */
   sidebar: {
     width: 240,
     background: "#0f172a",
@@ -159,7 +173,6 @@ const styles = {
     display: "block",
   },
 
-  /* OVERLAY */
   overlay: {
     position: "fixed",
     inset: 0,
@@ -167,7 +180,6 @@ const styles = {
     zIndex: 999,
   },
 
-  /* MAIN (FIX: INGET marginLeft!) */
   mainArea: {
     flex: 1,
     display: "flex",
@@ -175,7 +187,6 @@ const styles = {
     width: "100%",
   },
 
-  /* TOPBAR */
   topBar: {
     display: "flex",
     alignItems: "center",
@@ -194,12 +205,10 @@ const styles = {
     cursor: "pointer",
   },
 
-  /* CONTENT */
   content: {
     padding: 30,
   },
 
-  /* USER */
   dropdownWrapper: {
     position: "relative",
   },
