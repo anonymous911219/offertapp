@@ -4,14 +4,17 @@ import jsPDF from "jspdf";
 
 export const runtime = "nodejs";
 
-export async function POST(req: NextRequest): Promise<Response> {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   console.log("🔥 SEND EMAIL API HIT");
 
   try {
     const apiKey = process.env.RESEND_API_KEY;
 
     if (!apiKey) {
-      throw new Error("Missing RESEND_API_KEY");
+      return NextResponse.json(
+        { success: false, error: "Missing RESEND_API_KEY" },
+        { status: 500 }
+      );
     }
 
     const resend = new Resend(apiKey);
@@ -25,37 +28,46 @@ export async function POST(req: NextRequest): Promise<Response> {
       );
     }
 
+    // 📄 PDF
     const doc = new jsPDF();
 
+    doc.setFontSize(18);
     doc.text("Fönsterputs Offert", 20, 20);
-    doc.text(`Offert: ${data.offert_id || "-"}`, 20, 40);
+
+    doc.setFontSize(12);
+    doc.text(`Offertnummer: ${data.offert_id || "-"}`, 20, 40);
     doc.text(`Namn: ${data.namn || "-"}`, 20, 50);
     doc.text(`Email: ${data.email || "-"}`, 20, 60);
-    doc.text(`Pris: ${data.pris || 0} kr`, 20, 70);
+    doc.text(`Pris: ${data.pris || 0} kr`, 20, 80);
 
-    const pdf = doc.output("arraybuffer");
+    const pdfArrayBuffer = doc.output("arraybuffer");
 
-    await resend.emails.send({
+    // 📩 EMAIL
+    const result = await resend.emails.send({
       from: "onboarding@resend.dev",
       to: data.email,
       subject: `Din offert ${data.offert_id || ""}`,
-      html: `<p>Din offert är bifogad.</p>`,
+      html: `
+        <h1>Fönsterputs Offert</h1>
+        <p>Hej ${data.namn || "kund"},</p>
+        <p>Din offert är bifogad.</p>
+        <p><b>Pris:</b> ${data.pris || 0} kr</p>
+      `,
       attachments: [
         {
-          filename: `offert.pdf`,
-          content: Buffer.from(pdf),
+          filename: `offert-${data.offert_id || "unknown"}.pdf`,
+          content: Buffer.from(pdfArrayBuffer),
         },
       ],
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, result });
 
-  } catch (error: unknown) {
+  } catch (error) {
+    console.error("❌ EMAIL ERROR:", error);
+
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
