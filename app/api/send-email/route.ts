@@ -4,7 +4,7 @@ import jsPDF from "jspdf";
 
 export const runtime = "nodejs";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   console.log("🔥 SEND EMAIL API HIT");
 
   try {
