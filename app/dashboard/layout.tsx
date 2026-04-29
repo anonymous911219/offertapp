@@ -11,14 +11,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // ✅ VIKTIG FIX: explicit typ (detta löser allt)
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
 
-      // 👇 säkrare än data?.user || null
+      // ✅ KRITISKA FIXEN (ingen optional chaining här)
       setUser(data.user ?? null);
     };
 
