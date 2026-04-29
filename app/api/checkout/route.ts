@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
@@ -13,20 +13,18 @@ if (!stripeSecretKey) {
   throw new Error("Missing STRIPE_SECRET_KEY");
 }
 
-const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: "2024-06-20",
-});
+const stripe = new Stripe(stripeSecretKey);
 
 /* =========================
    POST ROUTE
 ========================= */
 
-export async function POST(req: NextRequest): Promise<Response> {
+export async function POST(req: NextRequest) {
   try {
     const { amount } = await req.json();
 
     if (!amount || typeof amount !== "number") {
-      return Response.json(
+      return NextResponse.json(
         { error: "Invalid amount" },
         { status: 400 }
       );
@@ -53,14 +51,21 @@ export async function POST(req: NextRequest): Promise<Response> {
       cancel_url: "http://localhost:3000/cancel",
     });
 
-    return Response.json({ url: session.url });
+    if (!session.url) {
+      return NextResponse.json(
+        { error: "Missing session URL" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ url: session.url });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Unknown error";
 
     console.error("STRIPE ERROR:", message);
 
-    return Response.json(
+    return NextResponse.json(
       { error: message },
       { status: 500 }
     );
