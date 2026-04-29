@@ -1,17 +1,16 @@
 "use client";
 
-import "./globals.css";
-import AppShell from "@/components/AppShell";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
+import AppShell from "@/components/AppShell";
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // ✅ FIX: tillåt både User och null
+  // ✅ FIX: explicit typning (viktigt!)
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -23,10 +22,20 @@ export default function RootLayout({
         return;
       }
 
-      setUser(data?.user ?? null);
+      setUser(data.user ?? null);
     };
 
     getUser();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   return (
