@@ -13,11 +13,29 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user ?? null);
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error) {
+        console.error("Auth error:", error.message);
+        setUser(null);
+        return;
+      }
+
+      setUser(data?.user ?? null);
     };
 
     getUser();
+
+    // 🔥 Live auth sync (så UI uppdateras direkt)
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   const logout = async () => {
@@ -30,7 +48,7 @@ export default function DashboardLayout({
       <div style={styles.topBar}>
         <div style={styles.userBox}>
           <div style={styles.avatar}>
-            {(user?.email?.charAt(0) ?? "A").toUpperCase()}
+            {(user?.email?.charAt(0) ?? "?").toUpperCase()}
           </div>
 
           <div>
