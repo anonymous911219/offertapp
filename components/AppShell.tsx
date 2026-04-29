@@ -11,7 +11,7 @@ export default function AppShell({
 }: {
   children: React.ReactNode;
 }) {
-  const [user, setUser] = useState<User | null>(null as User | null);
+  const [user, setUser] = useState<User | null>(null);
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -20,7 +20,8 @@ export default function AppShell({
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
-      setUser(data.user ?? null);
+      const currentUser: User | null = data?.user ?? null;
+setUser(currentUser);
     };
 
     getUser();
