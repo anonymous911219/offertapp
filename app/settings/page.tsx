@@ -1,10 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 
+/* =========================
+   TYPES
+========================= */
+
+type Settings = {
+  company_name: string;
+  email_notifications: boolean;
+  auto_create_customer: boolean;
+  auto_send_offer: boolean;
+  ai_scoring: boolean;
+  default_margin: number;
+  vat: number;
+  currency: string;
+};
+
+/* =========================
+   COMPONENT
+========================= */
+
 export default function SettingsPage() {
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<Settings>({
     company_name: "",
     email_notifications: true,
     auto_create_customer: true,
@@ -15,11 +35,11 @@ export default function SettingsPage() {
     currency: "SEK",
   });
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
 
   /* =========================
-     FETCH SETTINGS
+     FETCH
   ========================= */
   const fetchSettings = async () => {
     setLoading(true);
@@ -31,7 +51,7 @@ export default function SettingsPage() {
       .single();
 
     if (!error && data) {
-      setSettings(data);
+      setSettings(data as Settings);
     }
 
     setLoading(false);
@@ -42,14 +62,14 @@ export default function SettingsPage() {
   }, []);
 
   /* =========================
-     SAVE SETTINGS
+     SAVE
   ========================= */
   const saveSettings = async () => {
     setSaving(true);
 
     const { error } = await supabase
       .from("settings")
-      .upsert([settings]);
+      .upsert(settings);
 
     if (error) {
       console.error("Save error:", error.message);
@@ -58,6 +78,9 @@ export default function SettingsPage() {
     setSaving(false);
   };
 
+  /* =========================
+     UI
+  ========================= */
   return (
     <div style={styles.page}>
       <h1 style={styles.title}>⚙️ Inställningar</h1>
@@ -66,8 +89,7 @@ export default function SettingsPage() {
         <p>Laddar...</p>
       ) : (
         <div style={styles.grid}>
-
-          {/* 🏢 COMPANY */}
+          {/* COMPANY */}
           <div style={styles.card}>
             <h3>🏢 Företag</h3>
 
@@ -80,7 +102,7 @@ export default function SettingsPage() {
             />
           </div>
 
-          {/* 🤖 AUTOMATION */}
+          {/* AUTOMATION */}
           <div style={styles.card}>
             <h3>🤖 Automation</h3>
 
@@ -109,7 +131,7 @@ export default function SettingsPage() {
             />
           </div>
 
-          {/* 💰 PRICING */}
+          {/* PRICING */}
           <div style={styles.card}>
             <h3>💰 Prissättning</h3>
 
@@ -143,7 +165,7 @@ export default function SettingsPage() {
             />
           </div>
 
-          {/* 🔔 NOTIFICATIONS */}
+          {/* NOTIFICATIONS */}
           <div style={styles.card}>
             <h3>🔔 Notifikationer</h3>
 
@@ -158,11 +180,9 @@ export default function SettingsPage() {
               }
             />
           </div>
-
         </div>
       )}
 
-      {/* SAVE */}
       <button
         style={styles.saveBtn}
         onClick={saveSettings}
@@ -178,27 +198,45 @@ export default function SettingsPage() {
    UI COMPONENTS
 ========================= */
 
-function Input({ label, value, onChange, type = "text" }) {
+function Input({
+  label,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string | number;
+  onChange: (v: string) => void;
+  type?: string;
+}) {
   return (
     <div style={styles.field}>
       <label style={styles.label}>{label}</label>
       <input
         style={styles.input}
         type={type}
-        value={value || ""}
+        value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
       />
     </div>
   );
 }
 
-function Toggle({ label, value, onChange }) {
+function Toggle({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
     <div style={styles.toggle}>
       <span>{label}</span>
       <input
         type="checkbox"
-        checked={value || false}
+        checked={value ?? false}
         onChange={(e) => onChange(e.target.checked)}
       />
     </div>
@@ -209,7 +247,7 @@ function Toggle({ label, value, onChange }) {
    STYLES
 ========================= */
 
-const styles = {
+const styles: Record<string, CSSProperties> = {
   page: {
     padding: 24,
     color: "white",

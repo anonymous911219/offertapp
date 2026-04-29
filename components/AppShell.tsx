@@ -3,11 +3,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
+import type { CSSProperties } from "react";
 
-export default function AppShell({ children }) {
-const [user, setUser] = useState<User | null>(null);  const [open, setOpen] = useState(false);
+export default function AppShell({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [user, setUser] = useState<User | null>(null);
+  const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const pathname = usePathname();
@@ -15,7 +20,7 @@ const [user, setUser] = useState<User | null>(null);  const [open, setOpen] = us
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
-      setUser(data?.user || null);
+      setUser(data?.user ?? null);
     };
 
     getUser();
@@ -26,86 +31,93 @@ const [user, setUser] = useState<User | null>(null);  const [open, setOpen] = us
     window.location.href = "/login";
   };
 
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/");
+
   return (
     <div style={styles.body}>
-      <div style={styles.wrapper}>
+      {/* OVERLAY */}
+      {menuOpen && (
+        <div style={styles.overlay} onClick={() => setMenuOpen(false)} />
+      )}
 
-        {/* OVERLAY */}
-        {menuOpen && (
-          <div
-            style={styles.overlay}
-            onClick={() => setMenuOpen(false)}
-          />
-        )}
+      {/* SIDEBAR */}
+      <aside
+        style={{
+          ...styles.sidebar,
+          transform: menuOpen ? "translateX(0)" : "translateX(-100%)",
+        }}
+      >
+        <nav style={styles.nav}>
+          <NavLink href="/dashboard" label="📈 Panel" current={pathname} onClick={() => setMenuOpen(false)} />
+          <NavLink href="/offers" label="📋 Offerter" current={pathname} onClick={() => setMenuOpen(false)} />
+          <NavLink href="/crm" label="📊 CRM" current={pathname} onClick={() => setMenuOpen(false)} />
+          <NavLink href="/customers" label="👥 Kunder" current={pathname} onClick={() => setMenuOpen(false)} />
+          <NavLink href="/settings" label="⚙️ Inställningar" current={pathname} onClick={() => setMenuOpen(false)} />
+        </nav>
+      </aside>
 
-        {/* SIDEBAR */}
-        <aside
-          style={{
-            ...styles.sidebar,
-            transform: menuOpen ? "translateX(0)" : "translateX(-100%)",
-          }}
-        >
-          <nav style={styles.nav}>
-            <NavLink href="/dashboard" label="📈 Panel" current={pathname} onClick={() => setMenuOpen(false)} />
-            <NavLink href="/offers" label="📋 Offerter" current={pathname} onClick={() => setMenuOpen(false)} />
-            <NavLink href="/crm" label="📊 CRM" current={pathname} onClick={() => setMenuOpen(false)} />
-            <NavLink href="/customers" label="👥 Kunder" current={pathname} onClick={() => setMenuOpen(false)} />
-            <NavLink href="/settings" label="⚙️ Inställningar" current={pathname} onClick={() => setMenuOpen(false)} />
-          </nav>
-        </aside>
+      {/* MAIN */}
+      <div
+        style={{
+          ...styles.mainArea,
+          marginLeft: menuOpen ? 240 : 0,
+        }}
+      >
+        {/* TOPBAR */}
+        <div style={styles.topBar}>
+          <button
+            style={styles.hamburger}
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            ☰
+          </button>
 
-        {/* MAIN */}
-        <div style={styles.mainArea}>
+          <div style={{ flex: 1 }} />
 
-          {/* TOPBAR */}
-          <div style={styles.topBar}>
-            <button
-              style={styles.hamburger}
-              onClick={() => setMenuOpen(!menuOpen)}
-            >
-              ☰
-            </button>
-
-            <div style={styles.spacer} />
-
-            {/* USER */}
-            <div style={styles.dropdownWrapper}>
-              <div
-                style={styles.avatar}
-                onClick={() => setOpen(!open)}
-              >
-                {(user?.email?.charAt(0) || "A").toUpperCase()}
-              </div>
-
-              {open && (
-                <div style={styles.dropdown}>
-                  <p style={{ margin: 0, fontSize: 12, opacity: 0.7 }}>
-                    {user?.email}
-                  </p>
-
-                  <button style={styles.dropdownBtn} onClick={logout}>
-                    🚪 Logga ut
-                  </button>
-                </div>
-              )}
+          {/* USER */}
+          <div style={{ position: "relative" }}>
+            <div style={styles.avatar} onClick={() => setOpen(!open)}>
+              {(user?.email?.charAt(0) ?? "A").toUpperCase()}
             </div>
+
+            {open && (
+              <div style={styles.dropdown}>
+                <p style={styles.email}>
+                  {user?.email ?? "Ej inloggad"}
+                </p>
+
+                <button style={styles.dropdownBtn} onClick={logout}>
+                  🚪 Logga ut
+                </button>
+              </div>
+            )}
           </div>
-
-          {/* CONTENT */}
-          <main style={styles.content}>{children}</main>
-
         </div>
+
+        <main style={styles.content}>{children}</main>
       </div>
     </div>
   );
 }
 
-/* NAV LINK */
-function NavLink({ href, label, current, onClick }) {
-  const active = current === href;
+/* NAV */
+function NavLink({
+  href,
+  label,
+  current,
+  onClick,
+}: {
+  href: string;
+  label: string;
+  current: string;
+  onClick: () => void;
+}) {
+  const active =
+    current === href || current.startsWith(href + "/");
 
   return (
-    <Link
+    <a
       href={href}
       onClick={onClick}
       style={{
@@ -114,21 +126,17 @@ function NavLink({ href, label, current, onClick }) {
       }}
     >
       {label}
-    </Link>
+    </a>
   );
 }
 
-/* STYLES (EXAKT DIN DESIGN) */
-const styles = {
+/* STYLES */
+const styles: Record<string, CSSProperties> = {
   body: {
     margin: 0,
     fontFamily: "sans-serif",
     background: "#0b1220",
     color: "white",
-  },
-
-  wrapper: {
-    display: "flex",
   },
 
   sidebar: {
@@ -148,6 +156,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: 10,
+    marginTop: 40,
   },
 
   link: {
@@ -166,10 +175,9 @@ const styles = {
   },
 
   mainArea: {
-    flex: 1,
-    marginLeft: 240,
     display: "flex",
     flexDirection: "column",
+    transition: "margin-left 0.25s ease",
   },
 
   topBar: {
@@ -179,8 +187,6 @@ const styles = {
     background: "#0f172a",
     borderBottom: "1px solid #1f2a44",
   },
-
-  spacer: { flex: 1 },
 
   content: {
     padding: 30,
@@ -194,10 +200,6 @@ const styles = {
     cursor: "pointer",
   },
 
-  dropdownWrapper: {
-    position: "relative",
-  },
-
   avatar: {
     width: 38,
     height: 38,
@@ -207,6 +209,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
+    fontWeight: "bold",
   },
 
   dropdown: {
@@ -218,6 +221,12 @@ const styles = {
     borderRadius: 10,
     width: 200,
     zIndex: 2000,
+  },
+
+  email: {
+    fontSize: 12,
+    opacity: 0.7,
+    margin: 0,
   },
 
   dropdownBtn: {

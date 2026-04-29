@@ -4,10 +4,27 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useParams } from "next/navigation";
 
-export default function OffertPage() {
-  const { id } = useParams();
+/* =========================
+   TYPE
+========================= */
+type Offer = {
+  id: string | number;
+  offert_id?: string;
+  status?: string;
+  namn?: string;
+  email?: string;
 
-  const [offer, setOffer] = useState(null);
+  antal_fonster?: number;
+  hojd?: number;
+  bredd?: number;
+  sprojs?: boolean;
+};
+
+export default function OffertPage() {
+  const params = useParams();
+  const id = params?.id as string | undefined;
+
+  const [offer, setOffer] = useState<Offer | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,23 +36,26 @@ export default function OffertPage() {
       const { data, error } = await supabase
         .from("offers")
         .select("*")
-        .eq("id", id) // byt till Number(id) om din DB använder integer
+        .eq("id", id)
         .single();
 
       if (error) {
-        console.error("Supabase error:", error);
+        console.error("Supabase error:", error.message);
         setOffer(null);
         setLoading(false);
         return;
       }
 
-      setOffer(data);
+      setOffer((data as Offer) ?? null);
       setLoading(false);
     };
 
     fetchOffer();
   }, [id]);
 
+  /* =========================
+     LOADING / ERROR
+  ========================= */
   if (loading) {
     return <p style={styles.page}>Laddar offert...</p>;
   }
@@ -44,11 +64,13 @@ export default function OffertPage() {
     return <p style={styles.page}>Offert hittades inte</p>;
   }
 
-  // Safe calculation (undviker NaN)
+  /* =========================
+     SAFE CALCULATION
+  ========================= */
   const total =
-    (offer.antal_fonster || 0) * 50 +
-    ((offer.hojd || 0) * (offer.bredd || 0)) / 1000 +
-    (offer.sprojs ? (offer.antal_fonster || 0) * 10 : 0);
+    (offer.antal_fonster ?? 0) * 50 +
+    ((offer.hojd ?? 0) * (offer.bredd ?? 0)) / 1000 +
+    (offer.sprojs ? (offer.antal_fonster ?? 0) * 10 : 0);
 
   return (
     <div style={styles.wrapper}>
@@ -86,6 +108,9 @@ export default function OffertPage() {
   );
 }
 
+/* =========================
+   STYLES
+========================= */
 const styles = {
   wrapper: {
     maxWidth: 800,
@@ -136,4 +161,4 @@ const styles = {
   page: {
     padding: 30,
   },
-};
+} as const;

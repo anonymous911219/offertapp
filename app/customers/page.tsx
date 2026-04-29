@@ -1,14 +1,43 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
-export default function CustomersPage() {
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
+/* =========================
+   TYPES
+========================= */
 
-  const [newCustomer, setNewCustomer] = useState({
+type Customer = {
+  id: string | number;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  notes?: string;
+  created_at?: string;
+};
+
+type NewCustomer = {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  notes: string;
+};
+
+/* =========================
+   COMPONENT
+========================= */
+
+export default function CustomersPage() {
+  const router = useRouter();
+
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const [newCustomer, setNewCustomer] = useState<NewCustomer>({
     name: "",
     email: "",
     phone: "",
@@ -16,10 +45,8 @@ export default function CustomersPage() {
     notes: "",
   });
 
-  const router = useRouter();
-
   /* =========================
-     FETCH CUSTOMERS
+     FETCH
   ========================= */
   const fetchCustomers = async () => {
     setLoading(true);
@@ -35,7 +62,7 @@ export default function CustomersPage() {
       return;
     }
 
-    setCustomers(data || []);
+    setCustomers((data ?? []) as Customer[]);
     setLoading(false);
   };
 
@@ -44,7 +71,7 @@ export default function CustomersPage() {
   }, []);
 
   /* =========================
-     CREATE CUSTOMER
+     CREATE
   ========================= */
   const createCustomer = async () => {
     if (!newCustomer.name || !newCustomer.email) {
@@ -63,7 +90,7 @@ export default function CustomersPage() {
           notes: newCustomer.notes,
         },
       ])
-      .select();
+      .select("*");
 
     if (error) {
       console.error("CREATE ERROR:", error.message);
@@ -71,7 +98,9 @@ export default function CustomersPage() {
       return;
     }
 
-    setCustomers((prev) => [...(data || []), ...prev]);
+    const inserted = (data ?? []) as Customer[];
+
+    setCustomers((prev) => [...inserted, ...prev]);
 
     setNewCustomer({
       name: "",
@@ -86,22 +115,18 @@ export default function CustomersPage() {
      LOADING
   ========================= */
   if (loading) {
-    return (
-      <div style={styles.page}>
-        Laddar kunder...
-      </div>
-    );
+    return <div style={styles.page}>Laddar kunder...</div>;
   }
 
+  /* =========================
+     UI
+  ========================= */
   return (
     <div style={styles.page}>
       <div style={styles.container}>
-
         <h1 style={styles.title}>👥 Kunder</h1>
 
-        {/* =========================
-           CREATE FORM
-        ========================= */}
+        {/* CREATE FORM */}
         <div style={styles.card}>
           <h3>➕ Skapa kund</h3>
 
@@ -155,9 +180,7 @@ export default function CustomersPage() {
           </button>
         </div>
 
-        {/* =========================
-           LIST CUSTOMERS
-        ========================= */}
+        {/* LIST */}
         <h3>📋 Alla kunder</h3>
 
         {customers.length === 0 && (
@@ -172,12 +195,9 @@ export default function CustomersPage() {
           >
             <b>{c.name}</b>
             <p style={{ opacity: 0.7 }}>{c.email}</p>
-            <p style={{ fontSize: 12, opacity: 0.5 }}>
-              {c.phone}
-            </p>
+            <p style={{ fontSize: 12, opacity: 0.5 }}>{c.phone}</p>
           </div>
         ))}
-
       </div>
     </div>
   );
@@ -186,7 +206,8 @@ export default function CustomersPage() {
 /* =========================
    STYLES
 ========================= */
-const styles = {
+
+const styles: Record<string, CSSProperties> = {
   page: {
     background: "#0b1220",
     minHeight: "100vh",

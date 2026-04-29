@@ -1,12 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
+import type { DropResult } from "@hello-pangea/dnd";
 import { supabase } from "@/lib/supabase";
 import {
   DragDropContext,
   Droppable,
   Draggable,
 } from "@hello-pangea/dnd";
+
+/* =========================
+   TYPES
+========================= */
+
+type Offer = {
+  id: string | number;
+  namn: string;
+  email: string;
+  pris: number;
+  status?: string;
+
+  antal_fonster?: number;
+  hojd?: number;
+  bredd?: number;
+  sprojs?: boolean;
+};
+
+type NewOffer = {
+  name: string;
+  email: string;
+  antal_fonster: number;
+  hojd: number;
+  bredd: number;
+  sprojs: boolean;
+};
 
 const COLUMNS = [
   { id: "draft", title: "📝 Utkast" },
@@ -16,12 +44,16 @@ const COLUMNS = [
   { id: "rejected", title: "❌ Nekade" },
 ];
 
+/* =========================
+   COMPONENT
+========================= */
+
 export default function CRMBoard() {
-  const [offers, setOffers] = useState([]);
-  const [selected, setSelected] = useState(null);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [selected, setSelected] = useState<Offer | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const [newOffer, setNewOffer] = useState({
+  const [newOffer, setNewOffer] = useState<NewOffer>({
     name: "",
     email: "",
     antal_fonster: 0,
@@ -44,7 +76,7 @@ export default function CRMBoard() {
       return;
     }
 
-    setOffers(data || []);
+    setOffers((data as Offer[]) || []);
   };
 
   useEffect(() => {
@@ -52,9 +84,9 @@ export default function CRMBoard() {
   }, []);
 
   /* =========================
-     PRICE CALC
+     PRICE
   ========================= */
-  const calcPrice = (o) => {
+  const calcPrice = (o: NewOffer) => {
     const f = Number(o.antal_fonster) || 0;
     const h = Number(o.hojd) || 0;
     const b = Number(o.bredd) || 0;
@@ -63,7 +95,7 @@ export default function CRMBoard() {
   };
 
   /* =========================
-     CREATE CUSTOMER (API)
+     CREATE CUSTOMER
   ========================= */
   const createCustomer = async () => {
     const res = await fetch("/api/customers/create", {
@@ -78,27 +110,25 @@ export default function CRMBoard() {
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.error);
+      throw new Error(data?.error || "Unknown error");
     }
 
     return data;
   };
 
   /* =========================
-     CREATE OFFER FLOW
+     CREATE OFFER
   ========================= */
   const createOffer = async () => {
     setCreating(true);
 
     try {
-      // 1. skapa / hämta kund via API
       const customer = await createCustomer();
 
       if (!customer?.id) {
         throw new Error("Customer ID missing");
       }
 
-      // 2. skapa offert
       const offer = {
         customer_id: customer.id,
         offert_id: `OFF-${Date.now()}`,
@@ -120,7 +150,6 @@ export default function CRMBoard() {
         throw new Error(error.message);
       }
 
-      // reset form
       setNewOffer({
         name: "",
         email: "",
@@ -131,17 +160,20 @@ export default function CRMBoard() {
       });
 
       await fetchOffers();
-    } catch (err) {
-      console.error("Create error:", err.message);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Unknown error";
+
+      console.error("Create error:", message);
     }
 
     setCreating(false);
   };
 
   /* =========================
-     DRAG & DROP
+     DRAG & DROP (FIXED)
   ========================= */
-  const onDragEnd = async (result) => {
+  const onDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
 
     const newStatus = result.destination.droppableId;
@@ -160,17 +192,17 @@ export default function CRMBoard() {
     );
   };
 
-  const getColumnItems = (status) =>
+  const getColumnItems = (status: string) =>
     offers.filter((o) => (o.status || "draft") === status);
 
   /* =========================
      UI
-  ========================= */
+========================= */
+
   return (
     <div style={styles.page}>
       <h1 style={styles.title}>📊 CRM Board</h1>
 
-      {/* CREATE */}
       <div style={styles.createBox}>
         <input
           placeholder="Namn"
@@ -197,7 +229,6 @@ export default function CRMBoard() {
         </button>
       </div>
 
-      {/* BOARD */}
       <DragDropContext onDragEnd={onDragEnd}>
         <div style={styles.board}>
           {COLUMNS.map((col) => (
@@ -249,7 +280,8 @@ export default function CRMBoard() {
 /* =========================
    STYLES
 ========================= */
-const styles = {
+
+const styles: Record<string, CSSProperties> = {
   page: {
     padding: 20,
     color: "white",

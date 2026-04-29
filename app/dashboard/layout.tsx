@@ -4,18 +4,22 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
-export default function DashboardLayout({ children }) {
-const [user, setUser] = useState<User | null>(null);
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [user, setUser] = useState<User | null>(null);
+
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
-      setUser(data?.user || null);
+      setUser(data.user ?? null);
     };
 
     getUser();
   }, []);
 
-  // 🚪 LOGGA UT
   const logout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
@@ -23,20 +27,30 @@ const [user, setUser] = useState<User | null>(null);
 
   return (
     <div style={styles.wrapper}>
-      
-   
+      <div style={styles.topBar}>
+        <div style={styles.userBox}>
+          <div style={styles.avatar}>
+            {(user?.email?.charAt(0) ?? "A").toUpperCase()}
+          </div>
 
-      {/* CONTENT */}
-      <main style={styles.main}>
-        {children}
-      </main>
+          <div>
+            <p style={styles.userLabel}>Inloggad som</p>
+            <p style={styles.userEmail}>{user?.email ?? "..."}</p>
+          </div>
+        </div>
 
+        <button style={styles.logoutBtn} onClick={logout}>
+          Logga ut
+        </button>
+      </div>
+
+      <main style={styles.main}>{children}</main>
     </div>
   );
 }
 
 /* STYLES */
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   wrapper: {
     minHeight: "100vh",
     background: "#0b1220",

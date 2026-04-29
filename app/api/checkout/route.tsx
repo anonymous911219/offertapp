@@ -1,6 +1,12 @@
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+if (!stripeSecretKey) {
+  throw new Error("Missing STRIPE_SECRET_KEY");
+}
+
+const stripe = new Stripe(stripeSecretKey);
 
 export async function POST(req) {
   try {
@@ -26,7 +32,10 @@ export async function POST(req) {
     });
 
     return Response.json({ url: session.url });
-  } catch (error) {
-    return Response.json({ error: error.message });
-  }
+  } catch (error: unknown) {
+  const message =
+    error instanceof Error ? error.message : "Unknown error";
+
+  return Response.json({ error: message }, { status: 500 });
+}
 }

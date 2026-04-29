@@ -7,9 +7,19 @@ export default function Navbar() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error("Logout error:", error.message);
+        return;
+      }
+
+      router.push("/login");
+      router.refresh();
+    } catch (err) {
+      console.error("Unexpected logout error:", err);
+    }
   };
 
   return (
@@ -22,8 +32,6 @@ export default function Navbar() {
 
       {/* HÖGER SIDE */}
       <div className="flex items-center gap-3">
-        
-
         <button
           onClick={handleLogout}
           className="bg-white border border-red-200 text-red-600 px-4 py-2 rounded-lg
