@@ -1,16 +1,17 @@
 "use client";
 
+import "./globals.css";
+import AppShell from "@/components/AppShell";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
-import AppShell from "@/components/AppShell";
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // ✅ FIX: explicit typning (viktigt!)
+  // ✅ FIX: måste vara explicit User | null
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
