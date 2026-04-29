@@ -11,7 +11,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   // 🔥 VIKTIG FIX: explicit generic + null-safe init
-  const [user, setUser] = useState<User | null>(null);
+const [user, setUser] = useState<User | null>(null as unknown as User | null);
 
   useEffect(() => {
     const getUser = async () => {
