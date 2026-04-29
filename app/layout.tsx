@@ -10,7 +10,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // 🔥 FIX: korrekt typing för Vercel
+  // 🔥 VIKTIG FIX: explicit generic + null-safe init
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function RootLayout({
         return;
       }
 
-      setUser(data?.user ?? null);
+      setUser(data.user ?? null);
     };
 
     getUser();
