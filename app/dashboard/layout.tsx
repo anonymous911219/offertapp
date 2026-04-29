@@ -9,7 +9,8 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [user, setUser] = useState<User | null>(null);
+  // 🔥 FIX: stabil typing för Vercel/TS build
+  const [user, setUser] = useState<User | null>(null as User | null);
 
   useEffect(() => {
     let mounted = true;
@@ -23,7 +24,6 @@ export default function DashboardLayout({
         return;
       }
 
-      // 🔥 FIX: tvinga korrekt typ från Supabase (kan annars bli undefined typing i build)
       const currentUser: User | null = data?.user ?? null;
 
       if (mounted) {
