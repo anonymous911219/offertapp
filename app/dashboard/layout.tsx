@@ -12,28 +12,34 @@ export default function DashboardLayout({
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     const getUser = async () => {
       const { data, error } = await supabase.auth.getUser();
 
       if (error) {
         console.error("Auth error:", error.message);
-        setUser(null);
+        if (mounted) setUser(null);
         return;
       }
 
-      setUser(data?.user ?? null);
+      if (mounted) {
+        setUser(data?.user ?? null);
+      }
     };
 
     getUser();
 
-    // 🔥 Live auth sync (så UI uppdateras direkt)
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setUser(session?.user ?? null);
+        if (mounted) {
+          setUser(session?.user ?? null);
+        }
       }
     );
 
     return () => {
+      mounted = false;
       listener.subscription.unsubscribe();
     };
   }, []);
