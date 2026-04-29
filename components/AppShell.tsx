@@ -11,7 +11,7 @@ export default function AppShell({
 }: {
   children: React.ReactNode;
 }) {
-const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null as User | null);
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
