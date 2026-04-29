@@ -24,23 +24,23 @@ export default function DashboardLayout({
       }
 
       if (mounted) {
-        setUser(data?.user ?? null);
+        setUser(data.user ?? null);
       }
     };
 
     getUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (mounted) {
-          setUser(session?.user ?? null);
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) {
+        setUser(session?.user ?? null);
       }
-    );
+    });
 
     return () => {
       mounted = false;
-      listener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
