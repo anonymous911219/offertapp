@@ -20,19 +20,27 @@ export default function AppShell({
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
-      setUser(data?.user ?? null);
+      setUser(data.user ?? null);
     };
 
     getUser();
+
+    // 🔥 LIVE auth sync (fixar UI-buggar)
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   const logout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
   };
-
-  const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(href + "/");
 
   return (
     <div style={styles.body}>
@@ -78,7 +86,7 @@ export default function AppShell({
           {/* USER */}
           <div style={{ position: "relative" }}>
             <div style={styles.avatar} onClick={() => setOpen(!open)}>
-              {(user?.email?.charAt(0) ?? "A").toUpperCase()}
+              {(user?.email?.charAt(0) ?? "?").toUpperCase()}
             </div>
 
             {open && (
